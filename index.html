@@ -1,3 +1,8 @@
+
+// 🚨 **กรุณาเปลี่ยน URL และ LIFF ID ของคุณที่นี่**
+//GAS_URL = "https://script.google.com/macros/s/AKfycbxUKsruw87GOEQ4DZv8id8W-BGFKGqzx1eFgPSLU1WM4OxsPmMbWaSNS1QlZBQXLetI/exec";
+//LIFF_ID = "2008429931-5gKEregX"; 
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -14,7 +19,7 @@
         h2, h3, h4 { text-align: center; color: #2c3e50; }
         .pdpa-box { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background-color: #E8F0FE; margin-bottom: 15px; }
         
-        /* Loading Overlay Styles (เหมือนเดิม) */
+        /* Loading Overlay Styles */
         #loadingOverlay { display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 10000; }
         .lds-ring { display: inline-block; position: relative; width: 80px; height: 80px; }
         .lds-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 8px solid #2d87f0; border-radius: 50%; animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: #2d87f0 transparent transparent transparent; }
@@ -35,24 +40,26 @@
         <h2>🛠️ แก้ไขสถานะ PDPA</h2>
         <img id="profileImage">
         
-        <p class="text-center" style="font-size: 0.9rem; color: #777; margin-bottom: 20px;">
+        <p class="text-center" style="font-size: 0.9rem; color: #777; margin-bottom: 10px;">
             **Line User ID:** <span id="userIdDisplay" style="color: #333; font-weight: bold; word-break: break-all;">[กำลังโหลด...]</span>
         </p>
+
+        <hr id="summaryHR" class="hidden">
+        
+        <div id="summaryDisplayArea" class="hidden text-center p-3 rounded" style="background-color: #e3f2fd;">
+            <p class="mb-1"><strong>ID13 ที่ลงทะเบียน:</strong> <span id="summaryIdCard" style="color: green; font-weight: bold;">-</span></p>
+            <p class="mb-3"><strong>สถานะความยินยอม:</strong> <span id="summaryStatus" style="font-size: 1.1rem; font-weight: bold;">-</span></p>
+            
+            <button type="button" class="btn btn-warning btn-sm w-75" onclick="showUpdateSection()" id="editButton">
+                แก้ไข/อัปเดต สถานะ
+            </button>
+        </div>
         <input type="hidden" id="userId" readonly>
         <input type="hidden" id="displayName" readonly>
         <input type="hidden" id="logRowIndex"> <p id="alertMessage" class="alert alert-danger text-center hidden"></p>
 
         <hr>
         
-        <div id="statusSummary" class="hidden text-center p-3 border rounded" style="background-color: #fff3cd;">
-            <h4>สถานะ PDPA ปัจจุบัน</h4>
-            <p><strong>ID13 ที่ลงทะเบียน:</strong> <span id="summaryIdCard" style="color: green; font-weight: bold;">-</span></p>
-            <p><strong>สถานะความยินยอม:</strong> <span id="summaryStatus" style="font-size: 1.2rem; font-weight: bold;">-</span></p>
-            
-            <button type="button" class="btn btn-warning btn-lg mt-3 w-100" onclick="showUpdateSection()" id="editButton">
-                แก้ไข/อัปเดต สถานะ
-            </button>
-        </div>
         <div id="pdpaUpdateSection" class="hidden">
             <h4 class="text-center" style="text-decoration: underline;">ข้อมูลสำหรับการแก้ไข</h4>
             <p><strong>ยศ-ชื่อ-สกุล:</strong> <span id="fullUserName" style="color: blue;">-</span></p>
@@ -83,8 +90,8 @@
     <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
     <script>
         // 🚨 **กรุณาเปลี่ยน URL และ LIFF ID ของคุณที่นี่**
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxUKsruw87GOEQ4DZv8id8W-BGFKGqzx1eFgPSLU1WM4OxsPmMbWaSNS1QlZBQXLetI/exec";
-        const LIFF_ID = "2008429931-5gKEregX"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxUKsruw87GOEQ4DZv8id8W-BGFKGqzx1eFgPSLU1WM4OxsPmMbWaSNS1QlZBQXLetI/exec"; // เปลี่ยนเป็น URL ของ Google Apps Script ของคุณ
+        const LIFF_ID = "2008429931-5gKEregX"; // เปลี่ยนเป็น LIFF ID ของคุณ
 
         function showLoading(message = "กำลังโหลดข้อมูล...") {
             document.getElementById("loadingText").textContent = message;
@@ -117,7 +124,7 @@
                 fetch(GAS_URL, {
                     method: 'POST',
                     body: new URLSearchParams({
-                        action: 'checkExistingUser', // GAS Function ที่เราสร้าง
+                        action: 'checkExistingUser', // GAS Function
                         userId: userId
                     })
                 })
@@ -130,11 +137,15 @@
                         const statusText = data.currentConsent === '1' ? 'ยินยอม' : 'ไม่ยินยอม';
                         setAlert(`พบข้อมูลการลงทะเบียนแล้ว สถานะปัจจุบันคือ ${statusText}`, 'info');
                         
-                        document.getElementById("statusSummary").classList.remove("hidden");
+                        // *** ส่วนที่เพิ่ม/แก้ไข: ทำให้ข้อมูลสรุปแสดงทันที ***
+                        document.getElementById("summaryDisplayArea").classList.remove("hidden");
+                        document.getElementById("summaryHR").classList.remove("hidden");
+                        
                         document.getElementById("summaryIdCard").textContent = data.idCard;
                         document.getElementById("summaryStatus").textContent = statusText;
+                        // *** สิ้นสุดการแก้ไข ***
                         
-                        // เก็บข้อมูลที่สำคัญไว้ใน data attribute ของ element ที่ซ่อนอยู่
+                        // เก็บข้อมูลที่สำคัญไว้ใน data attribute 
                         document.getElementById("logRowIndex").value = data.rowIndex; 
                         document.getElementById("userId").dataset.idcard = data.idCard;
                         document.getElementById("userId").dataset.fullname = data.fullUserName;
@@ -144,12 +155,12 @@
                     } else if (data.status === 'notExists') {
                         // 2. ไม่พบผู้ใช้ - แจ้งให้ไปลงทะเบียน
                         setAlert(data.message + " กรุณาไปที่หน้าลงทะเบียน PDPA", 'danger');
-                        document.getElementById("statusSummary").classList.add("hidden");
+                        document.getElementById("summaryDisplayArea").classList.add("hidden");
 
                     } else {
                         // 3. ข้อผิดพลาดอื่นๆ
                         setAlert(data.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล', 'danger');
-                        document.getElementById("statusSummary").classList.add("hidden");
+                        document.getElementById("summaryDisplayArea").classList.add("hidden");
                     }
                 })
                 .catch(err => {
@@ -172,7 +183,7 @@
             const currentConsent = document.getElementById("userId").dataset.currentConsent;
 
             // ซ่อนส่วนสรุปสถานะและปุ่ม
-            document.getElementById("statusSummary").classList.add("hidden");
+            document.getElementById("summaryDisplayArea").classList.add("hidden");
 
             // เติมข้อมูลในส่วนแก้ไข (pdpaUpdateSection)
             document.getElementById("pdpaUpdateSection").classList.remove("hidden");
@@ -227,7 +238,7 @@
             fetch(GAS_URL, {
                 method: "POST",
                 body: new URLSearchParams({
-                    action: "updateAndMigrateConsent", // GAS Function ที่เราสร้าง
+                    action: "updateAndMigrateConsent", // GAS Function
                     idCard: idCard,
                     newConsentStatus: newConsentStatus,
                     logRowIndex: logRowIndex 
@@ -237,7 +248,8 @@
             .then(data => {
                 hideLoading();
                 if (data.status === "success") {
-                    alert(data.message); // แสดงข้อความจาก H1 ใน GAS
+                    // ข้อความแจ้งเตือนจาก H1 ใน GAS
+                    alert(data.message); 
                     setAlert(data.message, 'success');
                     document.getElementById("updateBtn").classList.add("hidden");
                     document.getElementById("consentSection").classList.add("hidden");
@@ -259,7 +271,7 @@
         }
 
         // LIFF initialization
-        liff.init({ liffId: "2008429931-5gKEregX" }, () => {
+        liff.init({ liffId: LIFF_ID }, () => {
             if (liff.isLoggedIn()) {
                 runApp();
             } else {
@@ -272,4 +284,4 @@
         });
     </script>
 </body>
-</html>
+</html>   
