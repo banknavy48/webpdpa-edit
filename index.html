@@ -7,19 +7,20 @@
     <title>PDPA | แก้ไขสถานะ</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
     <style>
-        /* ใช้ CSS เดิมของคุณ */
         body { font-family: 'Sarabun', sans-serif; margin: 30px; background-color: #f5f5f5; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
         .hidden { display: none !important; }
-        img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 20px; border: 2px solid #ccc; }
+        img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 10px; border: 2px solid #ccc; }
         h2, h3, h4 { text-align: center; color: #2c3e50; }
         .pdpa-box { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background-color: #E8F0FE; margin-bottom: 15px; }
-        /* ใส่ Loading Styles ของคุณที่นี่ */
+        
+        /* Loading Overlay Styles (เหมือนเดิม) */
         #loadingOverlay { display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 10000; }
         .lds-ring { display: inline-block; position: relative; width: 80px; height: 80px; }
         .lds-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 8px solid #2d87f0; border-radius: 50%; animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: #2d87f0 transparent transparent transparent; }
         @keyframes lds-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { margin-top: 20px; font-size: 1.2rem; color: #333; }
+        .consent-area { margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -33,19 +34,30 @@
     <div class="container hidden" id="mainContent">
         <h2>🛠️ แก้ไขสถานะ PDPA</h2>
         <img id="profileImage">
-        <p class="text-center" style="font-size: 0.9rem; color: #777;">
-            **Line User ID:** <span id="userIdDisplay" style="color: #333; font-weight: bold;">[กำลังโหลด...]</span>
+        
+        <p class="text-center" style="font-size: 0.9rem; color: #777; margin-bottom: 20px;">
+            **Line User ID:** <span id="userIdDisplay" style="color: #333; font-weight: bold; word-break: break-all;">[กำลังโหลด...]</span>
         </p>
         <input type="hidden" id="userId" readonly>
         <input type="hidden" id="displayName" readonly>
-        <input type="hidden" id="logRowIndex"> <p id="alertMessage" class="alert alert-danger text-center"></p>
+        <input type="hidden" id="logRowIndex"> <p id="alertMessage" class="alert alert-danger text-center hidden"></p>
 
+        <hr>
+        
+        <div id="statusSummary" class="hidden text-center p-3 border rounded" style="background-color: #fff3cd;">
+            <h4>สถานะ PDPA ปัจจุบัน</h4>
+            <p><strong>ID13 ที่ลงทะเบียน:</strong> <span id="summaryIdCard" style="color: green; font-weight: bold;">-</span></p>
+            <p><strong>สถานะความยินยอม:</strong> <span id="summaryStatus" style="font-size: 1.2rem; font-weight: bold;">-</span></p>
+            
+            <button type="button" class="btn btn-warning btn-lg mt-3 w-100" onclick="showUpdateSection()" id="editButton">
+                แก้ไข/อัปเดต สถานะ
+            </button>
+        </div>
         <div id="pdpaUpdateSection" class="hidden">
-            <h4 style="text-decoration: underline;">ข้อมูลปัจจุบัน</h4>
+            <h4 class="text-center" style="text-decoration: underline;">ข้อมูลสำหรับการแก้ไข</h4>
             <p><strong>ยศ-ชื่อ-สกุล:</strong> <span id="fullUserName" style="color: blue;">-</span></p>
-            <p><strong>เลขบัตรประชาชน:</strong> <span id="idCardDisplay" style="color: green;">-</span></p>
-            <p><strong>สถานะปัจจุบัน:</strong> <span id="currentStatusDisplay" style="font-weight: bold;">-</span></p>
-
+            <p><strong>เลขบัตรประชาชน:</strong> <span id="idCardDisplay" style="color: #777;">-</span></p>
+            
             <hr>
             
             <h3>นโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA)</h3>
@@ -61,7 +73,7 @@
             </div>
             
             <br>
-            <button type="button" class="btn btn-warning btn-lg w-100" onclick="updateConsent()" id="updateBtn">บันทึกการแก้ไข</button>
+            <button type="button" class="btn btn-danger btn-lg w-100" onclick="updateConsent()" id="updateBtn">บันทึกการแก้ไข</button>
             <p id="consentMessage" style="margin-top: 10px; color: red;"></p>
         </div>
         
@@ -70,9 +82,9 @@
     
     <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
     <script>
-        // 🚨 **เปลี่ยน URL นี้เป็น URL ที่ Deploy แล้วของ GAS Script ของคุณ**
+        // 🚨 **กรุณาเปลี่ยน URL และ LIFF ID ของคุณที่นี่**
         const GAS_URL = "https://script.google.com/macros/s/AKfycbztxMsVpuUKuDdHM9JoOb2GxvO4A6ZzTrYhLeFvWrB-HiIZtWo7dISYH2MhaPRGZzF0/exec";
-        const LIFF_ID = "2008429931-5gKEregX"; // 🚨 **เปลี่ยนเป็น LIFF ID ของคุณ**
+        const LIFF_ID = "2007674245-8mRaxkdj"; 
 
         function showLoading(message = "กำลังโหลดข้อมูล...") {
             document.getElementById("loadingText").textContent = message;
@@ -90,65 +102,54 @@
 
         // 1. ตรวจสอบสถานะผู้ใช้และเตรียม UI
         function runApp() {
-            showLoading("กำลังตรวจสอบสถานะ..."); // เพิ่ม Loading ก่อนเรียก API
+            showLoading("กำลังตรวจสอบสถานะ..."); 
+            
             liff.getProfile().then(profile => {
                 document.getElementById("profileImage").src = profile.pictureUrl;
+                
                 const userId = profile.userId;
                 document.getElementById("userId").value = userId; 
-                document.getElementById("userIdDisplay").textContent = userId; // <--- นำค่าไปแสดง
-        
+                document.getElementById("userIdDisplay").textContent = userId; // แสดง Line User ID
+
                 document.getElementById("displayName").value = profile.displayName;
                 document.getElementById("mainContent").classList.remove("hidden");
 
                 fetch(GAS_URL, {
                     method: 'POST',
                     body: new URLSearchParams({
-                        action: 'checkExistingUser',
+                        action: 'checkExistingUser', // GAS Function ที่เราสร้าง
                         userId: userId
                     })
                 })
                 .then(res => res.json())
                 .then(data => {
                     hideLoading();
-
+                    
                     if (data.status === 'exists_ready_to_update') {
-                        // โหมดแก้ไข
-                        setAlert("คุณเคยลงทะเบียนแล้ว สามารถแก้ไขสถานะ PDPA ได้", 'warning');
-                        document.getElementById("pdpaUpdateSection").classList.remove("hidden");
+                        // 1. พบผู้ใช้ - แสดงสรุปสถานะและปุ่มแก้ไข
+                        const statusText = data.currentConsent === '1' ? 'ยินยอม' : 'ไม่ยินยอม';
+                        setAlert(`พบข้อมูลการลงทะเบียนแล้ว สถานะปัจจุบันคือ ${statusText}`, 'info');
                         
-                        // เติมข้อมูล
-                        const currentStatus = data.currentConsent;
-                        document.getElementById("logRowIndex").value = data.rowIndex;
-                        document.getElementById("fullUserName").textContent = data.fullUserName;
-                        document.getElementById("idCardDisplay").textContent = data.idCard;
-                        document.getElementById("pdpaContent").innerHTML = data.pdpaContent;
-                        document.getElementById("currentStatusDisplay").textContent = currentStatus === '1' ? 'ยินยอม' : 'ไม่ยินยอม';
-
-                        // Logic การบังคับเลือกสถานะใหม่
-                        const radio1 = document.getElementById("consentCheckbox_1");
-                        const radio0 = document.getElementById("consentCheckbox_0");
-
-                        if (currentStatus === '1') {
-                            // เคยยินยอมแล้ว ไม่ต้องทำอะไร
-                            radio1.disabled = false;
-                            radio0.disabled = false;
-                            setAlert("สถานะปัจจุบันคือ 'ยินยอม' คุณสามารถเปลี่ยนสถานะเป็น 'ไม่ยินยอม' ได้", 'info');
-                        } else if (currentStatus === '0') {
-                            // เคยไม่ยินยอมแล้ว บังคับให้เลือกได้เฉพาะ 'ยินยอม'
-                            radio1.disabled = false;
-                            radio0.disabled = true; // ไม่สามารถเลือก 'ไม่ยินยอม' ซ้ำได้
-                            radio0.checked = true; // เลือกค่าเดิมไว้ แต่ disabled
-                            setAlert("สถานะปัจจุบันคือ 'ไม่ยินยอม' **คุณต้องเลือก 'ยินยอม'** หากต้องการแก้ไขสถานะ", 'danger');
-                        }
+                        document.getElementById("statusSummary").classList.remove("hidden");
+                        document.getElementById("summaryIdCard").textContent = data.idCard;
+                        document.getElementById("summaryStatus").textContent = statusText;
                         
+                        // เก็บข้อมูลที่สำคัญไว้ใน data attribute ของ element ที่ซ่อนอยู่
+                        document.getElementById("logRowIndex").value = data.rowIndex; 
+                        document.getElementById("userId").dataset.idcard = data.idCard;
+                        document.getElementById("userId").dataset.fullname = data.fullUserName;
+                        document.getElementById("userId").dataset.pdpaContent = data.pdpaContent;
+                        document.getElementById("userId").dataset.currentConsent = data.currentConsent;
+
                     } else if (data.status === 'notExists') {
-                        // โหมดลงทะเบียนใหม่
-                        setAlert(data.message + " กรุณาไปที่หน้าลงทะเบียน PDPA", 'success');
-                        document.getElementById("pdpaUpdateSection").classList.add("hidden");
+                        // 2. ไม่พบผู้ใช้ - แจ้งให้ไปลงทะเบียน
+                        setAlert(data.message + " กรุณาไปที่หน้าลงทะเบียน PDPA", 'danger');
+                        document.getElementById("statusSummary").classList.add("hidden");
+
                     } else {
-                        // ข้อผิดพลาดอื่นๆ
-                        setAlert(data.message, 'danger');
-                        document.getElementById("pdpaUpdateSection").classList.add("hidden");
+                        // 3. ข้อผิดพลาดอื่นๆ
+                        setAlert(data.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล', 'danger');
+                        document.getElementById("statusSummary").classList.add("hidden");
                     }
                 })
                 .catch(err => {
@@ -163,12 +164,45 @@
             });
         }
 
-        // 2. ฟังก์ชันอัปเดตสถานะ
+        // 2. ฟังก์ชันแสดงส่วนแก้ไขเมื่อกดปุ่ม "แก้ไข/อัปเดต"
+        function showUpdateSection() {
+            const idCard = document.getElementById("userId").dataset.idcard;
+            const fullUserName = document.getElementById("userId").dataset.fullname;
+            const pdpaContent = document.getElementById("userId").dataset.pdpaContent;
+            const currentConsent = document.getElementById("userId").dataset.currentConsent;
+
+            // ซ่อนส่วนสรุปสถานะและปุ่ม
+            document.getElementById("statusSummary").classList.add("hidden");
+
+            // เติมข้อมูลในส่วนแก้ไข (pdpaUpdateSection)
+            document.getElementById("pdpaUpdateSection").classList.remove("hidden");
+            document.getElementById("fullUserName").textContent = fullUserName || '-';
+            document.getElementById("idCardDisplay").textContent = idCard; 
+            document.getElementById("pdpaContent").innerHTML = pdpaContent;
+            
+            // ตั้งค่า Radio Buttons และ Logic บังคับเลือก
+            const radio1 = document.getElementById("consentCheckbox_1");
+            const radio0 = document.getElementById("consentCheckbox_0");
+            
+            // ตั้งค่าสถานะปัจจุบันและ Logic บังคับเลือก
+            if (currentConsent === '1') {
+                radio1.checked = true; // ตั้งค่าเริ่มต้นที่ยินยอม
+                radio0.disabled = false;
+                setAlert("สถานะปัจจุบันคือ 'ยินยอม' หากต้องการแก้ไขโปรดเลือก 'ไม่ยินยอม'", 'warning');
+            } else if (currentConsent === '0') {
+                radio0.checked = true; // ตั้งค่าเริ่มต้นที่ไม่ยินยอม
+                radio0.disabled = true; // บังคับ: เลือก 'ไม่ยินยอม' ซ้ำไม่ได้
+                radio1.disabled = false;
+                setAlert("สถานะปัจจุบันคือ 'ไม่ยินยอม' **คุณต้องเลือก 'ยินยอม'** หากต้องการแก้ไขสถานะ", 'danger');
+            }
+        }
+
+        // 3. ฟังก์ชันอัปเดตสถานะ (ส่งข้อมูลไป GAS)
         function updateConsent() {
             const selectedConsent = document.querySelector('input[name="pdpa_consent_new"]:checked');
-            const idCard = document.getElementById("idCardDisplay").textContent.trim();
+            const idCard = document.getElementById("userId").dataset.idcard;
             const logRowIndex = document.getElementById("logRowIndex").value;
-            const currentStatus = document.getElementById("currentStatusDisplay").textContent === 'ยินยอม' ? '1' : '0';
+            const currentConsent = document.getElementById("userId").dataset.currentConsent; // สถานะเดิม
 
             if (!selectedConsent) {
                 alert("กรุณาเลือกสถานะใหม่");
@@ -177,13 +211,12 @@
             
             const newConsentStatus = selectedConsent.value;
 
-            // ตรวจสอบเงื่อนไขการบังคับเลือก (หากเคย 'ไม่ยินยอม' จะเปลี่ยนกลับเป็น 'ไม่ยินยอม' ไม่ได้)
-            if (currentStatus === '0' && newConsentStatus === '0') {
+            // ตรวจสอบเงื่อนไขการบังคับเลือกและเลือกซ้ำ
+            if (currentConsent === '0' && newConsentStatus === '0') {
                 alert("คุณเคยเลือก 'ไม่ยินยอม' ไปแล้ว หากต้องการแก้ไขสถานะ คุณต้องเลือก 'ยินยอม' เท่านั้น");
                 return;
             }
-            // ตรวจสอบว่าเลือกสถานะซ้ำหรือไม่
-            if (currentStatus === newConsentStatus) {
+            if (currentConsent === newConsentStatus) {
                 alert("สถานะที่คุณเลือกใหม่เป็นสถานะเดิมอยู่แล้ว");
                 return;
             }
@@ -194,7 +227,7 @@
             fetch(GAS_URL, {
                 method: "POST",
                 body: new URLSearchParams({
-                    action: "updateAndMigrateConsent",
+                    action: "updateAndMigrateConsent", // GAS Function ที่เราสร้าง
                     idCard: idCard,
                     newConsentStatus: newConsentStatus,
                     logRowIndex: logRowIndex 
@@ -204,7 +237,7 @@
             .then(data => {
                 hideLoading();
                 if (data.status === "success") {
-                    alert(data.message); // แสดงข้อความจาก H1
+                    alert(data.message); // แสดงข้อความจาก H1 ใน GAS
                     setAlert(data.message, 'success');
                     document.getElementById("updateBtn").classList.add("hidden");
                     document.getElementById("consentSection").classList.add("hidden");
@@ -226,7 +259,7 @@
         }
 
         // LIFF initialization
-        liff.init({ liffId: LIFF_ID }, () => {
+        liff.init({ liffId: "2008429931-5gKEregX" }, () => {
             if (liff.isLoggedIn()) {
                 runApp();
             } else {
